@@ -52,7 +52,7 @@ sympy==1.13.2
 tenacity==8.5.0
 toml==0.10.2
 torch==2.1.0
-torch-scatter @ https://data.pyg.org/whl/torch-2.4.0+cpu.html
+torch-scatter==2.1.2
 torch_sparse==0.6.18
 torchaudio==2.4.0
 torchvision==0.19.0
