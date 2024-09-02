@@ -12,7 +12,7 @@ import shutil
 device = torch.device('cuda:0' if torch.cuda.is_available() else "cpu")
 
 @st.cache_data
-def clone_and_extract_folder(repo_url, branch_name, folder_path):
+def clone_and_extract_folder(repo_url, branch_name):
     """
     Clone a GitLab repository into a new directory in the current path and extract a specific folder.
     Then delete the .git directory and .gitattributes file to keep only the folder contents.
@@ -39,24 +39,6 @@ def clone_and_extract_folder(repo_url, branch_name, folder_path):
     # Clone the repository into the new directory
     print(f"Cloning repository from {repo_url} into {repo_path}...")
     git.Repo.clone_from(repo_url, repo_path, branch=branch_name)
-
-    # Copy the specific folder to the current directory
-    folder_source = os.path.join(repo_path, folder_path)
-    folder_destination = os.path.join(local_dir, os.path.basename(folder_path))
-
-    if os.path.exists(folder_source):
-        print(f"Copying folder {folder_source} to {folder_destination}...")
-        os.makedirs(folder_destination, exist_ok=True)
-        for item in os.listdir(folder_source):
-            s = os.path.join(folder_source, item)
-            d = os.path.join(folder_destination, item)
-            if os.path.isdir(s):
-                shutil.copytree(s, d, dirs_exist_ok=True)  # Copy directories
-            else:
-                shutil.copy2(s, d)  # Copy files
-        print(f"Folder copied to {folder_destination}.")
-    else:
-        print(f"Folder {folder_source} does not exist.")
 
     # Remove the .git directory
     git_dir = os.path.join(repo_path, '.git')
@@ -178,7 +160,6 @@ def get_audrc_for_cell(cell_name, cell2id_mapping, cell_features, drug_features,
 # Download required data from GitLab
 REPO_URL = 'https://gitlab.com/katynasada/sparsego4streamlit.git'  # Replace with your repository URL
 BRANCH_NAME = 'main'  # Replace with the branch name
-FOLDER_PATH = 'SparseGO'  # Path to the folder you want to extract
 clone_and_extract_folder(REPO_URL, BRANCH_NAME, FOLDER_PATH)
 
 with st.sidebar:
