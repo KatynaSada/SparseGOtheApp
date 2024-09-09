@@ -113,11 +113,8 @@ def load_all_data(inputdir, resultsdir, omics_type, device, typed=""):
     file_path = Path(genotype)
 
     #   Check if the file exists
-    df = pd.read_csv(file_path, sep="\t")  # Use sep="," for CSV, sep="\t" for TSV
-    st.write("Data loaded successfully:")
-    st.write(df)  # Print the DataFrame
-    st.write(genotype)
-    st.write(cell_features)
+    df = pd.read_csv(genotype, sep="\t")  # Use sep="," for CSV, sep="\t" for TSV
+    st.write(df)
     drug_features = np.genfromtxt(drug2fingerprint, delimiter=',')  # Load drug features
     drug2id_mapping = load_mapping(drug2id)  # Load drug ID mapping
     cell2id_mapping = load_mapping(cell2id)  # Load cell ID mapping
@@ -205,7 +202,6 @@ elif menu =='Drug Response':
         cell_features, drug_features, drug2id_mapping, cell2id_mapping, drugs_data = load_all_data(inputdir, resultsdir, omics_type, device, typed="")
         cell_name = st.selectbox('Select cell',cell2id_mapping)
         model = load_model(resultsdir, device)
-        st.write(cell_features)
         AUDRC_cell = get_audrc_for_cell(cell_name, cell2id_mapping, cell_features, drug_features, drug2id_mapping, drugs_data, model, device)
         slider_num = st.slider("Number of drugs", value=15,max_value=len(drug2id_mapping))
         # Get the first 10 drugs and their AUDRC values
