@@ -1,6 +1,7 @@
 from pathlib import Path
 import streamlit
 import streamlit as st
+from st_files_connection import FilesConnection
 from streamlit_option_menu import option_menu
 import numpy as np
 import torch
@@ -170,16 +171,23 @@ def get_audrc_for_cell(cell_name, cell2id_mapping, cell_features, drug_features,
     ).sort_values(by='AUDRC', ascending=True)
 
 # Download required data from GitLab
-REPO_URL = 'https://gitlab.com/katynasada/sparsego4streamlit.git'  # Replace with your repository URL
-BRANCH_NAME = 'main'  # Replace with the branch name
-clone_and_extract_folder(REPO_URL, BRANCH_NAME)
+# REPO_URL = 'https://gitlab.com/katynasada/sparsego4streamlit.git'  # Replace with your repository URL
+# BRANCH_NAME = 'main'  # Replace with the branch name
+# clone_and_extract_folder(REPO_URL, BRANCH_NAME)
+
+# Create connection object and retrieve file contents.
+# Specify input format is a csv and to cache the result for 600 seconds.
+conn = st.connection('gcs', type=FilesConnection)
+df = conn.read("gs://sparsego4streamlit/SparseGO/data/CLs_expression4transfer/allsamples/cell2expression.txt", input_format="text", ttl=600)
+
+st.write(df)
 
 with st.sidebar:
     menu = option_menu(None, ["About Us", "Drug Response", "MoA"], 
         icons=['house', 'capsule-pill', "clipboard-data"], # bullseye clipboard-heart joystick https://icons.getbootstrap.com/
         menu_icon="cast", default_index=0, orientation="vertical")
 
-sys.path.append("sparsego4streamlit_cloned/SparseGO/code")
+sys.path.append("SparseGO/code")
 import util
 from util import *
 
@@ -199,8 +207,8 @@ elif menu =='Drug Response':
     model = st.selectbox('What type of omics data do you want to use?',('Mutations', 'Expression', 'Mutations and expression'))
 
     if model == "Expression":
-        inputdir="sparsego4streamlit_cloned/SparseGO/data/CLs_expression4transfer/allsamples/"
-        resultsdir="sparsego4streamlit_cloned/SparseGO/results/CLs_expression4transfer/allsamples/"
+        inputdir="SparseGO/data/CLs_expression4transfer/allsamples/"
+        resultsdir="SparseGO/results/CLs_expression4transfer/allsamples/"
         omics_type = "cell2expression"
         cell_features, drug_features, drug2id_mapping, cell2id_mapping, drugs_data = load_all_data(inputdir, resultsdir, omics_type, device, typed="")
         cell_name = st.selectbox('Select cell',cell2id_mapping)
