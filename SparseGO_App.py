@@ -10,6 +10,8 @@ import plotly.express as px
 import git
 import shutil
 import pandas as pd
+import subprocess
+
 
 device = torch.device('cuda:0' if torch.cuda.is_available() else "cpu")
 
@@ -26,7 +28,8 @@ def clone_and_extract_folder(repo_url, branch_name):
     """
     # Set LOCAL_DIR to the current working directory
     local_dir = os.getcwd()
-
+    # Install Git LFS
+    subprocess.run(["sudo", "apt-get", "install", "git-lfs"])
     # Extract the repository name from the URL
     repo_name = repo_url.split('/')[-1].replace('.git', '')  # e.g., 'REPOSITORY'
 
