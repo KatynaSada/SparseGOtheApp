@@ -106,6 +106,8 @@ def load_all_data(inputdir, resultsdir, omics_type, device, typed=""):
 
     # Load features and mappings
     cell_features = np.genfromtxt(genotype, delimiter=',')  # Load cell features
+    st.write(genotype)
+    st.write(cell_features)
     drug_features = np.genfromtxt(drug2fingerprint, delimiter=',')  # Load drug features
     drug2id_mapping = load_mapping(drug2id)  # Load drug ID mapping
     cell2id_mapping = load_mapping(cell2id)  # Load cell ID mapping
@@ -133,12 +135,10 @@ def get_audrc_for_cell(cell_name, cell2id_mapping, cell_features, drug_features,
     """
     # Get the index of the cell from the cell name using a mapping dictionary
     cell_idx = cell2id_mapping[cell_name]
-    st.write(cell_features)
 
     # Retrieve the specific features for the cell at the given index
     cell_specific_features = cell_features[cell_idx]
-    st.write(cell_specific_features)
-
+    
     # Create a list of concatenated features for each drug
     cell_specific_features_drugs = [
         np.concatenate((cell_specific_features, drug_features[i]), axis=None)  # Concatenate cell features with drug features
