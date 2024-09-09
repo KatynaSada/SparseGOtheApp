@@ -194,7 +194,7 @@ elif menu =='Drug Response':
         omics_type = "cell2expression"
         cell_features, drug_features, drug2id_mapping, cell2id_mapping, drugs_data = load_all_data(inputdir, resultsdir, omics_type, device, typed="")
         cell_name = st.selectbox('Select cell',cell2id_mapping)
-        print(cell2id_mapping)
+        st.write(cell2id_mapping)
         model = load_model(resultsdir, device)
         AUDRC_cell = get_audrc_for_cell(cell_name, cell2id_mapping, cell_features, drug_features, drug2id_mapping, drugs_data, model, device)
         st.write(AUDRC_cell) 
