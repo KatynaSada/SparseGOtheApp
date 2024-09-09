@@ -133,6 +133,7 @@ def get_audrc_for_cell(cell_name, cell2id_mapping, cell_features, drug_features,
     """
     # Get the index of the cell from the cell name using a mapping dictionary
     cell_idx = cell2id_mapping[cell_name]
+    st.write(cell_idx)
 
     # Retrieve the specific features for the cell at the given index
     cell_specific_features = cell_features[cell_idx]
