@@ -197,7 +197,6 @@ elif menu =='Drug Response':
         model = load_model(resultsdir, device)
         st.write(cell_features)
         AUDRC_cell = get_audrc_for_cell(cell_name, cell2id_mapping, cell_features, drug_features, drug2id_mapping, drugs_data, model, device)
-        st.write(AUDRC_cell) 
         slider_num = st.slider("Number of drugs", value=15,max_value=len(drug2id_mapping))
         # Get the first 10 drugs and their AUDRC values
         top_drugs = AUDRC_cell.head(slider_num)
