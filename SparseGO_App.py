@@ -106,6 +106,14 @@ def load_all_data(inputdir, resultsdir, omics_type, device, typed=""):
 
     # Load features and mappings
     cell_features = np.genfromtxt(genotype, delimiter=',')  # Load cell features
+    # Define the file path
+    file_path = genotype
+
+    # Check if the file exists
+    if os.path.isfile(file_path):
+        print("The file exists.")
+    else:
+    print("The file does not exist.")
     st.write(genotype)
     st.write(cell_features)
     drug_features = np.genfromtxt(drug2fingerprint, delimiter=',')  # Load drug features
