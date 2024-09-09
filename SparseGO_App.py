@@ -35,6 +35,7 @@ def clone_and_extract_folder(repo_url, branch_name):
     print(f"Downloading Git LFS from {rpm_url}...")
     subprocess.run(["curl", "-L", rpm_url, "-o", rpm_file])
     
+    
     # Set LOCAL_DIR to the current working directory
     local_dir = os.getcwd()
 
