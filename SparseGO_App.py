@@ -136,6 +136,7 @@ def get_audrc_for_cell(cell_name, cell2id_mapping, cell_features, drug_features,
 
     # Retrieve the specific features for the cell at the given index
     cell_specific_features = cell_features[cell_idx]
+    st.write(cell_specific_features)
 
     # Create a list of concatenated features for each drug
     cell_specific_features_drugs = [
