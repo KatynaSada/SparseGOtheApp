@@ -28,12 +28,12 @@ def clone_and_extract_folder(repo_url, branch_name):
     - folder_path (str): The path to the folder within the repository to extract.
     """
     # Define the URL for the Git LFS RPM package
-    rpm_url = "https://packagecloud.io/github/git-lfs/packages/el/8/git-lfs-3.5.1-1.el8.x86_64.rpm/download"
-    rpm_file = os.path.join(os.getcwd(), "git-lfs-3.5.1-1.el8.x86_64.rpm")
+    # rpm_url = "https://packagecloud.io/github/git-lfs/packages/el/8/git-lfs-3.5.1-1.el8.x86_64.rpm/download"
+    # rpm_file = os.path.join(os.getcwd(), "git-lfs-3.5.1-1.el8.x86_64.rpm")
 
-    # Download the RPM package
-    print(f"Downloading Git LFS from {rpm_url}...")
-    subprocess.run(["curl", "-L", rpm_url, "-o", rpm_file])
+    # # Download the RPM package
+    # print(f"Downloading Git LFS from {rpm_url}...")
+    # subprocess.run(["curl", "-L", rpm_url, "-o", rpm_file])
     
     
     # Set LOCAL_DIR to the current working directory
