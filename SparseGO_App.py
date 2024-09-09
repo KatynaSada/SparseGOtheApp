@@ -110,15 +110,10 @@ def load_all_data(inputdir, resultsdir, omics_type, device, typed=""):
     # Define the file path
     file_path = Path(genotype)
 
-# Check if the file exists
-    if file_path.is_file():
-        # Check if the file contains anything
-        if file_path.stat().st_size > 0:
-             st.write("The file exists and contains data.")
-        else:
-             st.write("The file exists but is empty.")
-    else:
-         st.write("The file does not exist.")
+    #   Check if the file exists
+    df = pd.read_csv(file_path, sep="\t")  # Use sep="," for CSV, sep="\t" for TSV
+    st.write("Data loaded successfully:")
+    st.write(df)  # Print the DataFrame
     st.write(genotype)
     st.write(cell_features)
     drug_features = np.genfromtxt(drug2fingerprint, delimiter=',')  # Load drug features
