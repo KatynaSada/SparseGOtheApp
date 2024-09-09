@@ -160,7 +160,7 @@ def get_audrc_for_cell(cell_name, cell2id_mapping, cell_features, drug_features,
 # Download required data from GitLab
 REPO_URL = 'https://gitlab.com/katynasada/sparsego4streamlit.git'  # Replace with your repository URL
 BRANCH_NAME = 'main'  # Replace with the branch name
-clone_and_extract_folder(REPO_URL, BRANCH_NAME, FOLDER_PATH)
+clone_and_extract_folder(REPO_URL, BRANCH_NAME)
 
 with st.sidebar:
     menu = option_menu(None, ["About Us", "Drug Response", "MoA"], 
