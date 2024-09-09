@@ -9,6 +9,7 @@ import os
 import plotly.express as px
 import git
 import shutil
+import pandas as pd
 
 device = torch.device('cuda:0' if torch.cuda.is_available() else "cpu")
 
