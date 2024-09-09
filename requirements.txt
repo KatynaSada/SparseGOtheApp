@@ -52,10 +52,10 @@ sympy==1.13.2
 tenacity==8.5.0
 toml==0.10.2
 torch
-torch-scatter==2.4.0
-torch_sparse==0.6.18
-torchaudio==2.4.0
-torchvision==0.19.0
+torch-scatter
+torch_sparse
+torchaudio
+torchvision
 tzdata==2024.1
 urllib3==2.2.2
 wandb==0.17.8
