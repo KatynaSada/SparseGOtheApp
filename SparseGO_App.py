@@ -49,6 +49,8 @@ def clone_and_extract_folder(repo_url, branch_name):
     print(f"Cloning repository from {repo_url} into {repo_path}...")
     git.Repo.clone_from(repo_url, repo_path, branch=branch_name)
     # Ensure that LFS files are pulled after cloning
+    # Change to the cloned repository directory
+    os.chdir(repo_path)
     print("Pulling LFS files...")
     subprocess.run(["git", "lfs", "pull"], check=True)
     # os.system('git lfs install') 
