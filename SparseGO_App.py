@@ -41,7 +41,7 @@ def clone_and_extract_folder(repo_url, branch_name):
     # Clone the repository into the new directory
     print(f"Cloning repository from {repo_url} into {repo_path}...")
     git.Repo.clone_from(repo_url, repo_path, branch=branch_name)
-    os.system('git lfs pull --include="*.*"')
+    os.system('git lfs fetch --all')
 
     # Remove the .git directory
     git_dir = os.path.join(repo_path, '.git')
