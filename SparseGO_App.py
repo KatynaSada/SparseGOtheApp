@@ -107,7 +107,7 @@ def load_all_data(inputdir, resultsdir, omics_type, device, typed=""):
     # Load features and mappings
     cell_features = np.genfromtxt(genotype, delimiter=',')  # Load cell features
     # Define the file path
-    file_path = genotype
+    file_path = Path(genotype)
 
 # Check if the file exists
     if file_path.is_file():
