@@ -118,12 +118,6 @@ def load_all_data(inputdir, resultsdir, omics_type, device, typed=""):
 
     # Load features and mappings
     cell_features = np.genfromtxt(genotype, delimiter=',')  # Load cell features
-    # Define the file path
-    file_path = Path(genotype)
-
-    #   Check if the file exists
-    df = pd.read_csv(genotype, sep="\t")  # Use sep="," for CSV, sep="\t" for TSV
-    st.write(df)
     drug_features = np.genfromtxt(drug2fingerprint, delimiter=',')  # Load drug features
     drug2id_mapping = load_mapping(drug2id)  # Load drug ID mapping
     cell2id_mapping = load_mapping(cell2id)  # Load cell ID mapping
