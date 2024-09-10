@@ -171,7 +171,7 @@ def get_audrc_mean(all_samples_features, drug_features, drug2id_mapping, drugs_d
     st.write(AUDRC_cell)
     
     return AUDRC_cell
-def generate_audrc_bar_chart(AUDRC_cell, slider_default=10):
+def generate_audrc_bar_chart(AUDRC_cell, slider_num):
     """
     Generate a bar chart showing the AUDRC values for the top drugs based on cell-specific features.
 
@@ -179,7 +179,6 @@ def generate_audrc_bar_chart(AUDRC_cell, slider_default=10):
     - AUDRC_cell: DataFrame containing drug names, AUDRC values, and other relevant data.
     - slider_num: Number of top drugs to display in the bar chart (default: 10).
     """
-    slider_num = st.slider("Number of drugs", value=slider_default,max_value=len(drug2id_mapping))
     # Get the top drugs and their AUDRC values
     top_drugs = AUDRC_cell.head(slider_num)
     
@@ -295,7 +294,8 @@ elif menu =='Drug Response':
                 lines = content.split('\n')
                 uploaded_samples = [np.array([float(value) for value in line.split(',')]) for line in lines]
                 AUDRC_cell = get_audrc_mean(uploaded_samples, drug_features, drug2id_mapping, drugs_data, model, device)
-                generate_audrc_bar_chart(AUDRC_cell, slider_default=10)
+                slider_num = st.slider("Number of drugs", value=slider_default,max_value=len(drug2id_mapping))
+                generate_audrc_bar_chart(AUDRC_cell, slider_num)
                 
 
         elif input_type == "Use CCLE cell lines":
@@ -306,7 +306,8 @@ elif menu =='Drug Response':
                     cell_idx = cell2id_mapping.get(name)  # Get the index of the cell from the cell name using a mapping dictionary
                     cell_specific_features.append(cell_features[cell_idx])  # Retrieve the specific features for the cell at the given index
                 AUDRC_cell = get_audrc_mean(cell_specific_features, drug_features, drug2id_mapping, drugs_data, model, device)
-                generate_audrc_bar_chart(AUDRC_cell, slider_default=10)
+                slider_num = st.slider("Number of drugs", value=slider_default,max_value=len(drug2id_mapping))
+                generate_audrc_bar_chart(AUDRC_cell, slider_num)
             
             
 elif menu =='MoA':
