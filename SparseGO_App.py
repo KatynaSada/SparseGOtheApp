@@ -191,7 +191,7 @@ if menu =='About Us':
     )
     st.write("We hope this tool is valuable for your work. Feel free to reach out with any interesting discoveries, questions, or suggestions at ksada@unav.es!")
     st.image("app_elements/network.png")
-
+    
 elif menu =='Drug Response':
     st.title("Cancer Drug Response Prediction")
     st.write("Use this tool to predict the response of a cell to more than 1500 drugs.")
@@ -217,7 +217,7 @@ elif menu =='Drug Response':
             cell_name = st.selectbox('Select cell',cell2id_mapping)
             model = load_model(resultsdir, device)
             AUDRC_cell = get_audrc_for_cell(cell_name, cell2id_mapping, cell_features, drug_features, drug2id_mapping, drugs_data, model, device)
-            slider_num = st.slider("Number of drugs", value=15,max_value=len(drug2id_mapping)
+            slider_num = st.slider("Number of drugs", value=15,max_value=len(drug2id_mapping))
             # Get the first 10 drugs and their AUDRC values
             top_drugs = AUDRC_cell.head(slider_num)
             # Create a bar chart using Plotly
