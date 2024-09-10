@@ -11,6 +11,8 @@ import plotly.express as px
 import shutil
 import pandas as pd
 import subprocess
+from io import StringIO
+
 
 
 device = torch.device('cuda:0' if torch.cuda.is_available() else "cpu")
@@ -168,7 +170,34 @@ def get_audrc_for_cell(cell_name, cell2id_mapping, cell_features, drug_features,
     return pd.concat(
         [df_smiles_names[['Name']], df_AUDRC,df_smiles_names[['Smile']]], axis=1
     ).sort_values(by='AUDRC', ascending=True)
+def validate_uploaded_file(uploaded_file, example_file):
+    # Check if the uploaded file is a text files  
+    if not uploaded_file.name.endswith('.txt'):
+        st.error("Please upload a .txt file.")
+        return False
+    
+    # Read the example file to get the expected number of values
+    with open(example_file, 'r') as file:
+        example_values = file.read().strip().split(',')
+        expected_count = len(example_values)
+            
+    # Read the uploaded file
+    content = (uploaded_file.getvalue().decode("utf-8").strip())
+    uploaded_values = content.split(',')
+    # Validate the number of values
+    if len(uploaded_values) != expected_count:
+        st.error(f"The uploaded file must contain {expected_count} values, but it contains {len(uploaded_values)}.")
+        return False
 
+    # Validate that all values are numerical
+    try:
+        uploaded_values = [float(value) for value in uploaded_values]
+    except ValueError:
+        st.error("All values must be numerical.")
+        return False
+
+    st.success("File is valid!")
+    return True
 # Download required data from GitLab
 REPO_URL = 'https://gitlab.com/katynasada/sparsego4streamlit.git'  # Replace with your repository URL
 BRANCH_NAME = 'main'  # Replace with the branch name
@@ -202,23 +231,32 @@ elif menu =='Drug Response':
         inputdir="sparsego4streamlit_cloned/SparseGO/data/CLs_expression4transfer/allsamples/"
         resultsdir="sparsego4streamlit_cloned/SparseGO/results/CLs_expression4transfer/allsamples/"
         omics_type = "cell2expression"
-        
         # Load required model
         model = load_model(resultsdir, device)
         
-        uploaded_file = st.file_uploader("Upload cell features")
+        input_type = st.selectbox('Select your data source for prediction:', ('Upload cell/patient data', 'Use CCLE cell line'),index=None)
 
-        if uploaded_file is not None:
-            df = pd.read_csv(uploaded_file)
-            st.subheader('DataFrame')
-            st.write(df)
-            st.subheader('Descriptive Statistics')
-            st.write(df.describe())
-        else:
-            st.info('or select cell')
+        if input_type == "Upload cell/patient data":
+            gene2id_file = f"{inputdir}gene2ind.txt"
+            example_file = f"{inputdir}mycellexpression.txt"
+            # Write instructions for the user
+            st.write("**Please upload the expression data for the 14,834 genes from your sample in a text file with values separated by commas.**")
+            # Create two columns for the buttons
+            col1, col2 = st.columns(2)
+            with col1:
+                st.download_button("Download Required Gene List (Must Be in This Order)", open(gene2id_file), file_name="gene2id.txt")
+            with col2:
+                st.download_button("Download Example Features File", open(example_file), file_name="mycellexpression.txt")
+
+            # File uploader for user to upload their cell features
+            uploaded_file = st.file_uploader("Upload Your Cell Features Here")
+            if uploaded_file is not None:
+                validate_uploaded_file(uploaded_file,example_file)
+
+        elif input_type == "Use CCLE cell line":
             cell_features, drug_features, drug2id_mapping, cell2id_mapping, drugs_data = load_all_data(inputdir, resultsdir, omics_type, device, typed="")
-            cell_name = st.selectbox('Select cell',cell2id_mapping,index=None)
-            while cell_name is not None:
+            cell_name = st.selectbox('or select cell',cell2id_mapping,index=None)
+            if cell_name is not None:
                 AUDRC_cell = get_audrc_for_cell(cell_name, cell2id_mapping, cell_features, drug_features, drug2id_mapping, drugs_data, model, device)
                 slider_num = st.slider("Number of drugs", value=15,max_value=len(drug2id_mapping))
                 # Get the first 10 drugs and their AUDRC values
