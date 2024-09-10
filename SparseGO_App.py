@@ -255,7 +255,7 @@ elif menu =='Drug Response':
 
         elif input_type == "Use CCLE cell line":
             cell_features, drug_features, drug2id_mapping, cell2id_mapping, drugs_data = load_all_data(inputdir, resultsdir, omics_type, device, typed="")
-            cell_name = st.selectbox('or select cell',cell2id_mapping,index=None)
+            cell_name = st.selectbox('Select cell line',cell2id_mapping,index=None)
             if cell_name is not None:
                 AUDRC_cell = get_audrc_for_cell(cell_name, cell2id_mapping, cell_features, drug_features, drug2id_mapping, drugs_data, model, device)
                 slider_num = st.slider("Number of drugs", value=15,max_value=len(drug2id_mapping))
