@@ -128,76 +128,112 @@ def load_all_data(inputdir, resultsdir, omics_type, device, typed=""):
 
     return cell_features, drug_features, drug2id_mapping, cell2id_mapping, drugs_data
 @st.cache_data
-def get_audrc_for_cell(cell_name, cell2id_mapping, cell_features, drug_features, drug2id_mapping, drugs_data, _model, device):
+def get_audrc_mean(all_samples_features, drug_features, drug2id_mapping, drugs_data, _model, device):
+    # sourcery skip: inline-immediately-returned-variable
     """
-    Calculate the AUDRC values for a specific cell based on its features and drug features,
-    and create a DataFrame of the results sorted by AUDRC.
+    Calculate the AUDRC values for each sample based on their features and drug features,
+    store the AUDRC values in a matrix for each drug, and compute the mean per row.
 
     Parameters:
-    - cell_name: The name of the cell for which to calculate AUDRC.
-    - cell2id_mapping: A dictionary mapping cell names to their indices.
-    - cell_features: An array or list containing features for each cell.
+    - all_samples_features: A list of arrays, each containing features of a sample.
     - drug_features: A list or array of features for each drug.
     - drug2id_mapping: A mapping of drug identifiers.
+    - drugs_data: Data containing drug information.
     - model: The model to use for calculating AUDRC.
     - device: The device (CPU or GPU) to perform the calculations.
 
     Returns:
-    - df_combined: A DataFrame containing drug smiles, names, and their corresponding AUDRC values, sorted by AUDRC.
+    - audrc_mean_per_sample: A NumPy array containing the mean AUDRC values per sample.
     """
-    # Get the index of the cell from the cell name using a mapping dictionary
-    cell_idx = cell2id_mapping[cell_name]
-
-    # Retrieve the specific features for the cell at the given index
-    cell_specific_features = cell_features[cell_idx]
+    num_samples = len(all_samples_features)
+    num_drugs = len(drug2id_mapping)
     
-    # Create a list of concatenated features for each drug
-    cell_specific_features_drugs = [
-        np.concatenate((cell_specific_features, drug_features[i]), axis=None)  # Concatenate cell features with drug features
-        for i in range(len(drug2id_mapping))  # Iterate over each drug in the mapping
-    ]
+    audrc_matrix = np.zeros((num_samples, num_drugs))
+    
+    for sample_idx, sample_features in enumerate(all_samples_features):
+        sample_and_drugs_features = [
+            np.concatenate((sample_features, drug_features[i]), axis=None)
+            for i in range(num_drugs)
+        ]
 
-    # Convert the list of concatenated features into a PyTorch FloatTensor and move it to the specified device (CPU/GPU)
-    cell_specific_features_drugs = torch.FloatTensor(np.array(cell_specific_features_drugs)).to(device)
-
-    # Pass the concatenated features through the model to get the AUDRC values
-    AUDRC = model(cell_specific_features_drugs)
-
+        sample_and_drugs_features = torch.FloatTensor(np.array(sample_and_drugs_features)).to(device)
+        audrc_values = model(sample_and_drugs_features)
+        
+        audrc_matrix[sample_idx] = audrc_values.detach().numpy().reshape(-1)
+    
+    # Compute the mean per row (per sample)
+    audrc_mean_per_sample = np.mean(audrc_matrix.T, axis=1)
+    
     # Create DataFrames for smiles and AUDRC
     df_smiles_names = pd.DataFrame(drugs_data, columns=['Smile', 'Name'])
-    df_AUDRC = pd.DataFrame(AUDRC.detach().numpy(), columns=['AUDRC'])
-
-    return pd.concat(
-        [df_smiles_names[['Name']], df_AUDRC,df_smiles_names[['Smile']]], axis=1
-    ).sort_values(by='AUDRC', ascending=True)
-def validate_uploaded_file(uploaded_file, example_file):
-    # Check if the uploaded file is a text files  
-    if not uploaded_file.name.endswith('.txt'):
-        st.error("Please upload a .txt file.")
-        return False
+    df_AUDRC = pd.DataFrame(audrc_mean_per_sample, columns=['AUDRC'])    
+    AUDRC_cell = pd.concat( [df_smiles_names[['Name']], df_AUDRC,df_smiles_names[['Smile']]], axis=1).sort_values(by='AUDRC', ascending=True)
+    st.write(AUDRC_cell)
     
-    # Read the example file to get the expected number of values
-    with open(example_file, 'r') as file:
-        example_values = file.read().strip().split(',')
-        expected_count = len(example_values)
-            
-    # Read the uploaded file
-    content = (uploaded_file.getvalue().decode("utf-8").strip())
-    uploaded_values = content.split(',')
-    # Validate the number of values
-    if len(uploaded_values) != expected_count:
-        st.error(f"The uploaded file must contain {expected_count} values, but it contains {len(uploaded_values)}.")
-        return False
+    return AUDRC_cell
+def generate_audrc_bar_chart(AUDRC_cell, slider_default=10):
+    """
+    Generate a bar chart showing the AUDRC values for the top drugs based on cell-specific features.
 
-    # Validate that all values are numerical
+    Parameters:
+    - AUDRC_cell: DataFrame containing drug names, AUDRC values, and other relevant data.
+    - slider_num: Number of top drugs to display in the bar chart (default: 10).
+    """
+    slider_num = st.slider("Number of drugs", value=slider_default,max_value=len(drug2id_mapping))
+    # Get the top drugs and their AUDRC values
+    top_drugs = AUDRC_cell.head(slider_num)
+    
+    # Create a bar chart using Plotly
+    fig = px.bar(top_drugs, x='Name', y='AUDRC',
+                 title='AUDRC Values for Most Harmful Drugs',
+                 labels={'AUDRC': 'Drug Response (AUDRC)', 'Name': 'Drugs'},
+                 color='AUDRC',  # Optional: color bars by AUDRC value
+                 color_continuous_scale=px.colors.sequential.Sunset)  # Colorscale for the bars
+    
+    # Show the Plotly figure in Streamlit
+    st.plotly_chart(fig)
+def validate_uploaded_file(uploaded_file, example_file):
     try:
-        uploaded_values = [float(value) for value in uploaded_values]
-    except ValueError:
-        st.error("All values must be numerical.")
+        # Check if the uploaded file is a text file
+        if not uploaded_file.name.endswith('.txt'):
+            st.error("Please upload a .txt file.")
+            return False
+        
+        # Read the example file to get the expected number of values
+        with open(example_file, 'r') as file:
+            example_values = file.read().strip().split(',')
+            expected_count = len(example_values)
+        
+        # Read the uploaded file
+        content = uploaded_file.getvalue().decode("utf-8").strip()
+        # Split the content by newline characters to get individual lines
+        lines = content.split('\n')
+        
+        uploaded_samples = []
+        for line in lines:
+            values = line.split(',')
+            array_values = []
+            for value in values:
+                try:
+                    float_value = float(value)
+                    array_values.append(float_value)
+                except ValueError:
+                    st.error("All values must be numerical. A feature with a value of *" + value + "* has been detected.")
+                    return False
+            uploaded_samples.append(np.array(array_values))
+        
+        # Validate the number of values in each array
+        for sample in uploaded_samples:
+            if len(sample) != expected_count:
+                st.error(f"Each line in the uploaded file must contain {expected_count} numeric values, but one or more lines have a different number of values.")
+                return False
+
+        st.success("File is valid!")
+        return True
+    except Exception as e:
+        st.error(f"An error occurred: {str(e)}")
         return False
 
-    st.success("File is valid!")
-    return True
 # Download required data from GitLab
 REPO_URL = 'https://gitlab.com/katynasada/sparsego4streamlit.git'  # Replace with your repository URL
 BRANCH_NAME = 'main'  # Replace with the branch name
@@ -225,22 +261,25 @@ elif menu =='Drug Response':
     st.title("Cancer Drug Response Prediction")
     st.write("Use this tool to predict the response of a cell to more than 1500 drugs.")
     st.write("Our neural networks predict a continuous value that represents the area under the dose-response curve (AUDRC) normalized such that **AUDRC = 0 represents complete cell death, AUDRC = 1 represents no effect, and AUDRC > 1 represents that the treatment favours cell growth**.")
+    st.write("**Note:** If the predictions are computed for more than one sample, the mean for each drug is calculated.")
     model = st.selectbox('What type of omics data do you want to use?',('Mutations', 'Expression', 'Mutations and expression'))
 
     if model == "Expression":
         inputdir="sparsego4streamlit_cloned/SparseGO/data/CLs_expression4transfer/allsamples/"
         resultsdir="sparsego4streamlit_cloned/SparseGO/results/CLs_expression4transfer/allsamples/"
         omics_type = "cell2expression"
+        cell_features, drug_features, drug2id_mapping, cell2id_mapping, drugs_data = load_all_data(inputdir, resultsdir, omics_type, device, typed="")
+
         # Load required model
         model = load_model(resultsdir, device)
         
-        input_type = st.selectbox('Select your data source for prediction:', ('Upload cell/patient data', 'Use CCLE cell line'),index=None)
+        input_type = st.selectbox('Select your data source for prediction:', ('Upload cells/patients data', 'Use CCLE cell lines'),index=None)
 
-        if input_type == "Upload cell/patient data":
+        if input_type == "Upload cells/patients data":
             gene2id_file = f"{inputdir}gene2ind.txt"
             example_file = f"{inputdir}mycellexpression.txt"
             # Write instructions for the user
-            st.write("**Please upload the expression data for the 14,834 genes from your sample in a text file with values separated by commas.**")
+            st.write("**Please upload the expression data for the 14,834 genes in a text file. Each line should represent a sample with expression values for all genes separated by commas.**")
             # Create two columns for the buttons
             col1, col2 = st.columns(2)
             with col1:
@@ -250,25 +289,24 @@ elif menu =='Drug Response':
 
             # File uploader for user to upload their cell features
             uploaded_file = st.file_uploader("Upload Your Cell Features Here")
-            if uploaded_file is not None:
-                validate_uploaded_file(uploaded_file,example_file)
+            if uploaded_file is not None and (validate_uploaded_file(uploaded_file,example_file) and st.button('Predict drug response 💊')):
+                content = uploaded_file.getvalue().decode("utf-8").strip()
+                # Split the content by newline characters to get individual lines and Split each line by commas to create separate arrays
+                lines = content.split('\n')
+                uploaded_samples = [np.array([float(value) for value in line.split(',')]) for line in lines]
+                AUDRC_cell = get_audrc_mean(uploaded_samples, drug_features, drug2id_mapping, drugs_data, model, device)
+                generate_audrc_bar_chart(AUDRC_cell, slider_default=10)
+                
 
-        elif input_type == "Use CCLE cell line":
-            cell_features, drug_features, drug2id_mapping, cell2id_mapping, drugs_data = load_all_data(inputdir, resultsdir, omics_type, device, typed="")
-            cell_name = st.selectbox('Select cell line',cell2id_mapping,index=None)
-            if cell_name is not None:
-                AUDRC_cell = get_audrc_for_cell(cell_name, cell2id_mapping, cell_features, drug_features, drug2id_mapping, drugs_data, model, device)
-                slider_num = st.slider("Number of drugs", value=15,max_value=len(drug2id_mapping))
-                # Get the first 10 drugs and their AUDRC values
-                top_drugs = AUDRC_cell.head(slider_num)
-                # Create a bar chart using Plotly
-                fig = px.bar(top_drugs, x='Name', y='AUDRC', 
-                    title='AUDRC Values for Top 10 Drugs',
-                    labels={'AUDRC': 'AUDRC', 'Name': 'Drugs'},
-                    color='AUDRC',  # Optional: color bars by AUDRC value
-                    color_continuous_scale=px.colors.sequential.Sunset)  # https://plotly.com/python/builtin-colorscales/ colors
-                # Show the Plotly figure in Streamlit
-                st.plotly_chart(fig)
+        elif input_type == "Use CCLE cell lines":
+            cell_names = st.multiselect('Select one or more cell lines',cell2id_mapping)
+            if st.button('Predict drug response 💊'):
+                cell_specific_features = []
+                for name in cell_names:
+                    cell_idx = cell2id_mapping.get(name)  # Get the index of the cell from the cell name using a mapping dictionary
+                    cell_specific_features.append(cell_features[cell_idx])  # Retrieve the specific features for the cell at the given index
+                AUDRC_cell = get_audrc_mean(cell_specific_features, drug_features, drug2id_mapping, drugs_data, model, device)
+                generate_audrc_bar_chart(AUDRC_cell, slider_default=10)
             
             
 elif menu =='MoA':
