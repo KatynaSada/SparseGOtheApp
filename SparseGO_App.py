@@ -294,7 +294,7 @@ elif menu =='Drug Response':
                 lines = content.split('\n')
                 uploaded_samples = [np.array([float(value) for value in line.split(',')]) for line in lines]
                 AUDRC_cell = get_audrc_mean(uploaded_samples, drug_features, drug2id_mapping, drugs_data, model, device)
-                slider_num = st.slider("Number of drugs", value=slider_default,max_value=len(drug2id_mapping))
+                slider_num = st.slider("Number of drugs", value=10,max_value=len(drug2id_mapping))
                 generate_audrc_bar_chart(AUDRC_cell, slider_num)
                 
 
@@ -306,7 +306,7 @@ elif menu =='Drug Response':
                     cell_idx = cell2id_mapping.get(name)  # Get the index of the cell from the cell name using a mapping dictionary
                     cell_specific_features.append(cell_features[cell_idx])  # Retrieve the specific features for the cell at the given index
                 AUDRC_cell = get_audrc_mean(cell_specific_features, drug_features, drug2id_mapping, drugs_data, model, device)
-                slider_num = st.slider("Number of drugs", value=slider_default,max_value=len(drug2id_mapping))
+                slider_num = st.slider("Number of drugs", value=10,max_value=len(drug2id_mapping))
                 generate_audrc_bar_chart(AUDRC_cell, slider_num)
             
             
