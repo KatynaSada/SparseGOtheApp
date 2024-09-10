@@ -8,7 +8,6 @@ import torch
 import sys # we require code from other folders
 import os
 import plotly.express as px
-import git
 import shutil
 import pandas as pd
 import subprocess
@@ -25,50 +24,47 @@ def clone_and_extract_folder(repo_url, branch_name):
     Parameters:
     - repo_url (str): The URL of the GitLab repository to clone.
     - branch_name (str): The branch of the repository to clone.
-    - folder_path (str): The path to the folder within the repository to extract.
     """
-    # Ensure Git LFS is initialized
-    print("Initializing Git LFS...")
-    subprocess.run(["git", "lfs", "install"], check=True)
     
-    # Set LOCAL_DIR to the current working directory
-    local_dir = os.getcwd()
+    # Set original_dir to the current working directory
+    original_dir = os.getcwd()  # Store the original directory
 
     # Extract the repository name from the URL
     repo_name = repo_url.split('/')[-1].replace('.git', '')  # e.g., 'REPOSITORY'
 
     # Create a new directory for the repository
-    repo_path = os.path.join(local_dir, f"{repo_name}_cloned")  # Example: 'REPOSITORY_cloned'
-
-    # Delete the cloned folder if it exists
-    if os.path.exists(repo_path):
-        print(f"Removing existing cloned folder: {repo_path}...")
-        shutil.rmtree(repo_path)  # Remove the existing directory
+    repo_path = os.path.join(original_dir, f"{repo_name}_cloned")  # Example: 'REPOSITORY_cloned'
+    
+    # Check if the cloned folder exists and is not empty
+    if os.path.exists(repo_path) and os.listdir(repo_path):
+        print(f"The cloned folder already exists and is not empty: {repo_path}. Exiting the function.")
+        return  # Exit the function
+    
+    # Ensure Git LFS is initialized
+    print("Initializing Git LFS...")
+    subprocess.run(["git", "lfs", "install"], check=True)
 
     # Clone the repository into the new directory
     print(f"Cloning repository from {repo_url} into {repo_path}...")
-    git.Repo.clone_from(repo_url, repo_path, branch=branch_name)
-    # Ensure that LFS files are pulled after cloning
+    subprocess.run(["git", "clone", "--branch", branch_name, repo_url, repo_path], check=True)
+
     # Change to the cloned repository directory
     os.chdir(repo_path)
+
+    # Pull LFS files
     print("Pulling LFS files...")
     subprocess.run(["git", "lfs", "pull"], check=True)
-    # os.system('git lfs install') 
-    # os.system('git lfs fetch --all')
 
-    # Remove the .git directory
-    git_dir = os.path.join(repo_path, '.git')
-    if os.path.exists(git_dir):
-        print(f"Removing .git directory from {repo_path}...")
-        shutil.rmtree(git_dir)  # Remove the .git directory
-        print(".git directory removed.")
+    # Optionally, you can remove .git and .gitattributes if needed
+    print("Cleaning up unnecessary files...")
+    shutil.rmtree(os.path.join(repo_path, ".git"))
+    os.remove(os.path.join(repo_path, ".gitattributes"))
 
-    # Remove the .gitattributes file if it exists
-    gitattributes_file = os.path.join(repo_path, '.gitattributes')
-    if os.path.exists(gitattributes_file):
-        print(f"Removing .gitattributes file from {repo_path}...")
-        os.remove(gitattributes_file)  # Remove the .gitattributes file
-        print(".gitattributes file removed.")
+    print("Repository cloned and cleaned up successfully.")
+    
+    # Change back to the original directory
+    os.chdir(original_dir)
+    print(f"Returned to the original directory: {original_dir}")
 @st.cache_resource
 def load_model(resultsdir, device):
     """
