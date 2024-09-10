@@ -167,9 +167,7 @@ def get_audrc_mean(all_samples_features, drug_features, drug2id_mapping, drugs_d
     # Create DataFrames for smiles and AUDRC
     df_smiles_names = pd.DataFrame(drugs_data, columns=['Smile', 'Name'])
     df_AUDRC = pd.DataFrame(audrc_mean_per_sample, columns=['AUDRC'])    
-    AUDRC_cell = pd.concat( [df_smiles_names[['Name']], df_AUDRC,df_smiles_names[['Smile']]], axis=1).sort_values(by='AUDRC', ascending=True)
-    st.write(AUDRC_cell)
-    
+    AUDRC_cell = pd.concat( [df_smiles_names[['Name']], df_AUDRC,df_smiles_names[['Smile']]], axis=1).sort_values(by='AUDRC', ascending=True)    
     return AUDRC_cell
 def generate_audrc_bar_chart(AUDRC_cell, slider_num):
     """
@@ -285,6 +283,10 @@ elif menu =='Drug Response':
                 st.download_button("Download Required Gene List (Must Be in This Order)", open(gene2id_file), file_name="gene2id.txt")
             with col2:
                 st.download_button("Download Example Features File", open(example_file), file_name="mycellexpression.txt")
+            
+            # Initialize session state for storing results
+            if 'AUDRC_cell' not in st.session_state:
+                st.session_state.AUDRC_cell = None
 
             # File uploader for user to upload their cell features
             uploaded_file = st.file_uploader("Upload Your Cell Features Here")
@@ -293,22 +295,32 @@ elif menu =='Drug Response':
                 # Split the content by newline characters to get individual lines and Split each line by commas to create separate arrays
                 lines = content.split('\n')
                 uploaded_samples = [np.array([float(value) for value in line.split(',')]) for line in lines]
-                AUDRC_cell = get_audrc_mean(uploaded_samples, drug_features, drug2id_mapping, drugs_data, model, device)
-                slider_num = st.slider("Number of drugs", value=10,max_value=len(drug2id_mapping))
-                generate_audrc_bar_chart(AUDRC_cell, slider_num)
+                st.session_state.AUDRC_cell = get_audrc_mean(uploaded_samples, drug_features, drug2id_mapping, drugs_data, model, device)
+            
+            if st.session_state.AUDRC_cell is not None:
+                st.write(st.session_state.AUDRC_cell)
+                slider_num = st.slider("Number of drugs", value=10, max_value=len(drug2id_mapping), key="drug_slider")
+                generate_audrc_bar_chart(st.session_state.AUDRC_cell, slider_num)
+            
                 
 
         elif input_type == "Use CCLE cell lines":
+            # Initialize session state for storing results
+            if 'AUDRC_cell' not in st.session_state:
+                st.session_state.AUDRC_cell = None
             cell_names = st.multiselect('Select one or more cell lines',cell2id_mapping)
             if st.button('Predict drug response 💊'):
                 cell_specific_features = []
                 for name in cell_names:
                     cell_idx = cell2id_mapping.get(name)  # Get the index of the cell from the cell name using a mapping dictionary
                     cell_specific_features.append(cell_features[cell_idx])  # Retrieve the specific features for the cell at the given index
-                AUDRC_cell = get_audrc_mean(cell_specific_features, drug_features, drug2id_mapping, drugs_data, model, device)
-                slider_num = st.slider("Number of drugs", value=10,max_value=len(drug2id_mapping))
-                generate_audrc_bar_chart(AUDRC_cell, slider_num)
-            
+                st.session_state.AUDRC_cell = get_audrc_mean(cell_specific_features, drug_features, drug2id_mapping, drugs_data, model, device)
+                
+            if st.session_state.AUDRC_cell is not None:
+                st.write(st.session_state.AUDRC_cell)
+                slider_num = st.slider("Number of drugs", value=10, max_value=len(drug2id_mapping), key="drug_slider")
+                generate_audrc_bar_chart(st.session_state.AUDRC_cell, slider_num)
+        
             
 elif menu =='MoA':
     st.title("Predict the Mechanism of Action")
