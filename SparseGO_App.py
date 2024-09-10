@@ -202,21 +202,34 @@ elif menu =='Drug Response':
         inputdir="sparsego4streamlit_cloned/SparseGO/data/CLs_expression4transfer/allsamples/"
         resultsdir="sparsego4streamlit_cloned/SparseGO/results/CLs_expression4transfer/allsamples/"
         omics_type = "cell2expression"
-        cell_features, drug_features, drug2id_mapping, cell2id_mapping, drugs_data = load_all_data(inputdir, resultsdir, omics_type, device, typed="")
-        cell_name = st.selectbox('Select cell',cell2id_mapping)
-        model = load_model(resultsdir, device)
-        AUDRC_cell = get_audrc_for_cell(cell_name, cell2id_mapping, cell_features, drug_features, drug2id_mapping, drugs_data, model, device)
-        slider_num = st.slider("Number of drugs", value=15,max_value=len(drug2id_mapping))
-        # Get the first 10 drugs and their AUDRC values
-        top_drugs = AUDRC_cell.head(slider_num)
-        # Create a bar chart using Plotly
-        fig = px.bar(top_drugs, x='Name', y='AUDRC', 
-             title='AUDRC Values for Top 10 Drugs',
-             labels={'AUDRC': 'AUDRC', 'Name': 'Drugs'},
-             color='AUDRC',  # Optional: color bars by AUDRC value
-             color_continuous_scale=px.colors.sequential.Sunset)  # https://plotly.com/python/builtin-colorscales/ colors
-        # Show the Plotly figure in Streamlit
-        st.plotly_chart(fig)
+        
+        uploaded_file = st.file_uploader("Upload cell features")
+
+        if uploaded_file is not None:
+            df = pd.read_csv(uploaded_file)
+            st.subheader('DataFrame')
+            st.write(df)
+            st.subheader('Descriptive Statistics')
+            st.write(df.describe())
+        else:
+            st.info('or select cell')
+            cell_features, drug_features, drug2id_mapping, cell2id_mapping, drugs_data = load_all_data(inputdir, resultsdir, omics_type, device, typed="")
+            cell_name = st.selectbox('Select cell',cell2id_mapping)
+            model = load_model(resultsdir, device)
+            AUDRC_cell = get_audrc_for_cell(cell_name, cell2id_mapping, cell_features, drug_features, drug2id_mapping, drugs_data, model, device)
+            slider_num = st.slider("Number of drugs", value=15,max_value=len(drug2id_mapping)
+            # Get the first 10 drugs and their AUDRC values
+            top_drugs = AUDRC_cell.head(slider_num)
+            # Create a bar chart using Plotly
+            fig = px.bar(top_drugs, x='Name', y='AUDRC', 
+                title='AUDRC Values for Top 10 Drugs',
+                labels={'AUDRC': 'AUDRC', 'Name': 'Drugs'},
+                color='AUDRC',  # Optional: color bars by AUDRC value
+                color_continuous_scale=px.colors.sequential.Sunset)  # https://plotly.com/python/builtin-colorscales/ colors
+            # Show the Plotly figure in Streamlit
+            st.plotly_chart(fig)
+            
+            
 elif menu =='MoA':
     st.title("Predict the Mechanism of Action")
 
