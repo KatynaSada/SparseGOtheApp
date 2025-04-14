@@ -287,7 +287,7 @@ elif menu =='Drug Response':
     st.subheader("Use this tool to predict the response of a cell to more than 1500 drugs.")
     st.write("Our neural networks predict a continuous value that represents the area under the dose-response curve (AUDRC) normalized such that **AUDRC = 0 represents complete cell death, AUDRC = 1 represents no effect, and AUDRC > 1 represents that the treatment favours cell growth**.")
     st.write("**Note:** If the predictions are computed for more than one sample, the mean for each drug is calculated.")
-    model = st.selectbox('What type of omics data do you want to use?',('Mutations', 'Expression', 'Mutations and expression'))
+    model = st.selectbox('What type of omics data do you want to use?',('Expression')) # ('Mutations', 'Expression', 'Mutations and expression')
 
     if model == "Expression":
         inputdir="sparsego4streamlit_cloned/SparseGO/data/CLs_expression4transfer/allsamples/"
