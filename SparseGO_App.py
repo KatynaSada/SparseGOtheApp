@@ -355,5 +355,6 @@ elif menu =='Drug Response':
             
 elif menu =='MoA':
     st.title("Predict the Mechanism of Action")
+    st.write("Sorry, this feature is not available yet. Please check back later.")
 
     
