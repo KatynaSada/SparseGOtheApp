@@ -287,70 +287,79 @@ elif menu =='Drug Response':
     st.subheader("Use this tool to predict the response of a cell to more than 1500 drugs.")
     st.write("Our neural networks predict a continuous value that represents the area under the dose-response curve (AUDRC) normalized such that **AUDRC = 0 represents complete cell death, AUDRC = 1 represents no effect, and AUDRC > 1 represents that the treatment favours cell growth**.")
     st.write("**Note:** If the predictions are computed for more than one sample, the mean for each drug is calculated.")
-    model = st.selectbox('What type of omics data do you want to use?',('Expression')) # ('Mutations', 'Expression', 'Mutations and expression')
+    model = st.selectbox('What type of omics data do you want to use?',('Expression','Mutations'), index=None) # ('Mutations', 'Expression', 'Mutations and expression')
 
-    if model == "Expression":
-        inputdir="sparsego4streamlit_cloned/SparseGO/data/CLs_expression4transfer/allsamples/"
-        resultsdir="sparsego4streamlit_cloned/SparseGO/results/CLs_expression4transfer/allsamples/"
-        omics_type = "cell2expression"
-        cell_features, drug_features, drug2id_mapping, cell2id_mapping, drugs_data = load_all_data(inputdir, resultsdir, omics_type, device, typed="")
+    # Set paths and load data based on model type
+    if model in ["Expression", "Mutations"]:
+        update_audrc()
+        # Configure paths based on model type
+        model_config = {
+            "Expression": {
+                "inputdir": "sparsego4streamlit_cloned/SparseGO/data/CLs_expression4transfer/allsamples/",
+                "resultsdir": "sparsego4streamlit_cloned/SparseGO/results/CLs_expression4transfer/allsamples/",
+                "omics_type": "expression"
+            },
+            "Mutations": {
+                "inputdir": "sparsego4streamlit_cloned/SparseGO/data/CL_PDCs2018_mutations/allsamples/",
+                "resultsdir": "sparsego4streamlit_cloned/SparseGO/results/CL_PDCs2018_mutations/allsamples/",
+                "omics_type": "mutation"
+            }
+        }
+
+        config = model_config[model]
+        cell_features, drug_features, drug2id_mapping, cell2id_mapping, drugs_data = load_all_data(
+            config["inputdir"], config["resultsdir"], "cell2"+config["omics_type"], device, typed=""
+        )
 
         # Load required model
-        model = load_model(resultsdir, device)
+        model = load_model(config["resultsdir"], device)
         
-        input_type = st.selectbox('Select your data source for prediction:', ('Upload cells/patients data', 'Use CCLE cell lines'),index=None,on_change=update_audrc)
+        input_type = st.selectbox('Select your data source for prediction:', 
+                                 ('Upload cells/patients data', 'Use CCLE cell lines'),
+                                 index=None,
+                                 on_change=update_audrc)
 
         if input_type == "Upload cells/patients data":
-            gene2id_file = f"{inputdir}gene2ind.txt"
-            example_file = f"{inputdir}mycellexpression.txt"
+            gene2id_file = f"{config['inputdir']}gene2ind.txt"
+            example_file = f"{config['inputdir']}mycell{config['omics_type']}.txt"
+            
             # Write instructions for the user
-            st.write(f"**Please upload the expression data for the {len(pd.read_csv(gene2id_file, sep='\t'))+1} genes in a text file. Each line should represent a sample with expression values for all genes separated by commas.**")
-            # Create two columns for the buttons
+            st.write(f"**Please upload the {'expression' if model == 'Expression' else 'mutation'} data for the {len(pd.read_csv(gene2id_file, sep='\t'))+1} genes in a text file. Each line should represent a sample with values for all genes separated by commas.**")
+            
             col1, col2 = st.columns(2)
             with col1:
                 st.download_button("Download Required Gene List (Must Be in This Order)", open(gene2id_file), file_name="gene2id.txt")
             with col2:
-                st.download_button("Download Example Features File", open(example_file), file_name="mycellexpression.txt")
+                st.download_button("Download Example Features File", open(example_file), file_name=f"mycell{config['omics_type']}.txt")
 
-            # File uploader for user to upload their cell features
             uploaded_file = st.file_uploader("Upload Your Cell Features Here")
-            if uploaded_file is not None and (validate_uploaded_file(uploaded_file,example_file) and st.button('Predict drug response 💊')):
+            if uploaded_file is not None and (validate_uploaded_file(uploaded_file, example_file) and st.button('Predict drug response 💊')):
                 content = uploaded_file.getvalue().decode("utf-8").strip()
-                # Split the content by newline characters to get individual lines and Split each line by commas to create separate arrays
                 lines = content.split('\n')
                 uploaded_samples = [np.array([float(value) for value in line.split(',')]) for line in lines]
                 st.session_state.AUDRC_cell = get_audrc_mean(uploaded_samples, drug_features, drug2id_mapping, drugs_data, model, device)
             
-            if st.session_state.AUDRC_cell is not None:
-                st.write(st.session_state.AUDRC_cell)
-                slider_num = st.slider("Number of drugs", value=10, max_value=len(drug2id_mapping), key="drug_slider")
-                generate_audrc_bar_chart(st.session_state.AUDRC_cell, slider_num)
-
         elif input_type == "Use CCLE cell lines":
-            
             col1, col2 = st.columns(2)
             with col1:
-                cell_names = st.multiselect('Select one or more cell lines 🦠',cell2id_mapping, key="multiselect_cells")
+                cell_names = st.multiselect('Select one or more cell lines 🦠', cell2id_mapping, key="multiselect_cells")
             with col2:
                 cell_types, unique_cancers = get_cell_types(cell2id_mapping)
-                selected_cancer_type = st.multiselect('**and/or** select all cell lines of a cancer type 🧠 🫁 🩸 🦴',unique_cancers, key="multiselect_cancer")
+                selected_cancer_type = st.multiselect('**and/or** select all cell lines of a cancer type 🧠 🫁 🩸 🦴', unique_cancers, key="multiselect_cancer")
                 cell_names_cancer = [cell_name for cell_name, cancer in cell_types.items() if cancer in selected_cancer_type]
             
-            # Combine lists without duplicates using set
             all_cell_names = list(set(cell_names) | set(cell_names_cancer))
             st.info(f"You're predicting the drug response of {len(all_cell_names)} cell lines.")
             
             if st.button('Predict drug response 💊'):
-                cell_specific_features = []
-                for name in all_cell_names:
-                    cell_idx = cell2id_mapping.get(name)  # Get the index of the cell from the cell name using a mapping dictionary
-                    cell_specific_features.append(cell_features[cell_idx])  # Retrieve the specific features for the cell at the given index
+                cell_specific_features = [cell_features[cell2id_mapping[name]] for name in all_cell_names]
                 st.session_state.AUDRC_cell = get_audrc_mean(cell_specific_features, drug_features, drug2id_mapping, drugs_data, model, device)
-                
-            if st.session_state.AUDRC_cell is not None:
-                st.write(st.session_state.AUDRC_cell)
-                slider_num = st.slider("Number of drugs", value=10, max_value=len(drug2id_mapping), key="drug_slider")
-                generate_audrc_bar_chart(st.session_state.AUDRC_cell, slider_num)
+
+        # Display results if available
+        if st.session_state.AUDRC_cell is not None:
+            st.write(st.session_state.AUDRC_cell)
+            slider_num = st.slider("Number of drugs", value=10, max_value=len(drug2id_mapping), key="drug_slider")
+            generate_audrc_bar_chart(st.session_state.AUDRC_cell, slider_num)
         
             
 elif menu =='MoA':
