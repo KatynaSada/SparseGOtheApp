@@ -169,6 +169,7 @@ def get_audrc_mean(all_samples_features, drug_features, drug2id_mapping, drugs_d
     df_AUDRC = pd.DataFrame(audrc_mean_per_sample, columns=['AUDRC'])    
     AUDRC_cell = pd.concat( [df_smiles_names[['Name']], df_AUDRC,df_smiles_names[['Smile']]], axis=1).sort_values(by='AUDRC', ascending=True)    
     return AUDRC_cell
+@st.cache_data
 def generate_audrc_bar_chart(AUDRC_cell, slider_num):
     """
     Generate a bar chart showing the AUDRC values for the top drugs based on cell-specific features.
@@ -211,7 +212,6 @@ def validate_uploaded_file(uploaded_file, example_file):
         st.write(f"Number of samples in the uploaded file: {len(lines)}")
         
         for line in lines:
-            print(line)
             values = line.split(',')
             array_values = []
             for value in values:
@@ -295,7 +295,9 @@ elif menu =='Drug Response':
 
     # Set paths and load data based on model type
     if model in ["Expression", "Mutations"]:
-        update_audrc()
+        if 'AUDRC_cell' not in st.session_state:
+            update_audrc()
+    
         # Configure paths based on model type
         model_config = {
             "Expression": {
@@ -363,10 +365,4 @@ elif menu =='Drug Response':
         if st.session_state.AUDRC_cell is not None:
             st.write(st.session_state.AUDRC_cell)
             slider_num = st.slider("Number of drugs", value=10, max_value=len(drug2id_mapping), key="drug_slider")
-            generate_audrc_bar_chart(st.session_state.AUDRC_cell, slider_num)
-        
-            
-elif menu =='MoA':
-    st.title("Predict the Mechanism of Action")
-    st.write("Sorry, this feature is not available yet. Please check back later.")
-    
+            generate_audrc_bar_chart(st.session_state.AUDRC_cell, slide
