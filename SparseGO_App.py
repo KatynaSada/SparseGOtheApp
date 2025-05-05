@@ -365,4 +365,10 @@ elif menu =='Drug Response':
         if st.session_state.AUDRC_cell is not None:
             st.write(st.session_state.AUDRC_cell)
             slider_num = st.slider("Number of drugs", value=10, max_value=len(drug2id_mapping), key="drug_slider")
-            generate_audrc_bar_chart(st.session_state.AUDRC_cell, slide
+            generate_audrc_bar_chart(st.session_state.AUDRC_cell, slider_num)
+        
+            
+elif menu =='MoA':
+    st.title("Predict the Mechanism of Action")
+    st.write("Sorry, this feature is not available yet. Please check back later.")
+    
