@@ -299,7 +299,7 @@ elif menu =='Drug Response':
                 "resultsdir": "sparsego4streamlit_cloned/SparseGO/results/CLs_expression4transfer/allsamples/",
                 "omics_type": "expression"
             },
-            "Mutations": {
+            "Mutations": {                
                 "inputdir": "sparsego4streamlit_cloned/SparseGO/data/CL_PDCs2018_mutations/allsamples/",
                 "resultsdir": "sparsego4streamlit_cloned/SparseGO/results/CL_PDCs2018_mutations/allsamples/",
                 "omics_type": "mutation"
