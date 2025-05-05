@@ -198,8 +198,8 @@ def validate_uploaded_file(uploaded_file, example_file):
         
         # Read the example file to get the expected number of values
         with open(example_file, 'r') as file:
-            example_values = file.read().strip().split(',')
-            expected_count = len(example_values)
+            first_line = file.readline().strip()
+            expected_count = len(first_line.split(','))
         
         # Read the uploaded file
         content = uploaded_file.getvalue().decode("utf-8").strip()
@@ -207,7 +207,11 @@ def validate_uploaded_file(uploaded_file, example_file):
         lines = content.split('\n')
         
         uploaded_samples = []
+        # print number of lines
+        st.write(f"Number of samples in the uploaded file: {len(lines)}")
+        
         for line in lines:
+            print(line)
             values = line.split(',')
             array_values = []
             for value in values:
